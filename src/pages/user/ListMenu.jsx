@@ -29,7 +29,9 @@ const ListMenu = () => {
   const [selectedMenu, setSelectedMenu] = useState(null);
   const [showNotif, setShowNotif] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
+  const profileRef = useRef(null);
   const user = getUser();
   const focusToko = location.state?.focus_toko || null;
 
@@ -50,6 +52,22 @@ const ListMenu = () => {
     };
 
     fetchMenus();
+  }, []);
+
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setShowNotif(false);
+      }
+
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setShowProfile(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // ================= OUTSIDE CLICK NOTIF =================
@@ -141,11 +159,18 @@ const ListMenu = () => {
         </div>
 
         {/* PROFILE */}
-        <img
-          src={userProfil}
-          className="w-12 h-12 rounded-full object-cover shadow-md"
-          alt="profile"
-        />
+        <div className="relative" ref={profileRef}>
+          <img
+            src={
+              user?.foto
+                ? `${API}/uploads/${user.foto}`
+                : userProfil
+            }
+            onClick={() => setShowProfile(!showProfile)}
+            className="w-12 h-12 rounded-full object-cover shadow-md cursor-pointer border border-white hover:scale-105 transition"
+            alt="profile"
+          />
+        </div>
       </div>
 
       {/* CONTENT */}
