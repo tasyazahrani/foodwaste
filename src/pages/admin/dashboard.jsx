@@ -12,7 +12,7 @@ import {
 import SideBarAdmin from "../../components/SideBarAdmin";
 
 import bgUtama from "../../assets/image.png";
-import userProfil from "../../assets/people.png";
+import userProfil from "../../assets/Rectangle.png";
 
 // Import gambar menu — sama persis dengan ListMenuAdmin
 import donatGula from "../../assets/donat gula.jpg";
@@ -21,6 +21,7 @@ import bolu from "../../assets/bolu.jpg";
 import brownies from "../../assets/brownies.jpg";
 import cake from "../../assets/cake.jpg";
 import cheescake from "../../assets/cheescake.jpg";
+import NotificationBell from "../../components/NotificationBell";
 
 const menuImages = {
   "donat gula": donatGula,
@@ -128,8 +129,7 @@ const ActivityIcon = ({ tone }) => {
 /* ─── Main Component ────────────────────────────────────────── */
 export function DashboardAdmin() {
   const [search, setSearch] = useState("");
-  const [showNotif, setShowNotif] = useState(false);
-  const [produk, setProduk] = useState([]);
+    const [produk, setProduk] = useState([]);
   const [adminData, setAdminData] = useState(null);
 
   useEffect(() => {
@@ -151,15 +151,14 @@ export function DashboardAdmin() {
       .catch((err) => console.error(err));
   }, []);
 
-  const notifRef = useRef(null);
-
+  
   const filteredMenu = useMemo(() => {
     const query = search.trim().toLowerCase();
 
     if (!query) return produk;
 
     return produk.filter((item) =>
-      [item.nama_produk, item.deskripsi, item.status, item.namaToko]
+      [item.nama_produk, item.deskripsi, item.status, item.nama_toko]
         .join(" ")
         .toLowerCase()
         .includes(query),
@@ -206,16 +205,8 @@ export function DashboardAdmin() {
       </div>
 
       {/* TOP RIGHT */}
-      <div
-        className="absolute top-6 right-12 flex items-center gap-4 z-30"
-        ref={notifRef}
-      >
-        <button
-          onClick={() => setShowNotif(!showNotif)}
-          className="relative w-11 h-11 bg-[#f8bc22] rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all text-[#63714e]"
-        >
-          <Bell size={24} strokeWidth={2.5} />
-        </button>
+      <div className="absolute top-6 right-12 flex items-center gap-4 z-30">
+        <NotificationBell />
         <div className="p-0.5 bg-white rounded-full shadow-lg border border-gray-100 overflow-hidden flex items-center gap-2 pr-3">
           <img
             src={

@@ -6,25 +6,11 @@ import {
   MessageCircle,
   User,
 } from "lucide-react";
-import userAvatar from "../assets/people.png";
+import userAvatar from "../assets/Rectangle.png";
 
 const SideBarAdmin = ({ activePage }) => {
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
-  const currentUser = JSON.parse(
-  localStorage.getItem("user") ||
-    localStorage.getItem("userData") ||
-    "{}",
-);
-
-const profilePhoto = currentUser?.foto
-  ? `http://localhost:3000/uploads/${currentUser.foto}`
-  : userAvatar;
-
-const profileName =
-  currentUser?.nama_toko ||
-  currentUser?.nama_lengkap ||
-  "Admin";
 
   // Menu Items khusus Admin sesuai Route App.js
   const menuItems = [
@@ -49,14 +35,28 @@ const profileName =
     { id: "profilAdmin", icon: User, label: "Profil", route: "/admin/profil" },
   ];
 
-  const userPhoto = currentUser?.foto
-    ? `http://localhost:3000/uploads/${currentUser.foto}`
-    : userAvatar;
+  const [unreadChat, setUnreadChat] = useState(false);
 
-  const displayName =
-    currentUser?.namaToko ||
-    currentUser?.namaLengkap ||
-    "Admin";
+  React.useEffect(() => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user")) || JSON.parse(localStorage.getItem("userData"));
+      if (!user?.id) return;
+      
+      const checkChat = async () => {
+        try {
+          const res = await fetch(`http://localhost:3000/api/notifikasi/${user.id}`);
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            const hasUnread = data.some(n => n.is_read === 0 && (n.title.toLowerCase().includes("pesan") || n.title.toLowerCase().includes("balasan")));
+            setUnreadChat(hasUnread);
+          }
+        } catch (e) {}
+      };
+      checkChat();
+      const int = setInterval(checkChat, 3000);
+      return () => clearInterval(int);
+    } catch(e) {}
+  }, []);
 
   return (
     <nav
@@ -79,13 +79,13 @@ const profileName =
         }`}
       >
         <img
-          src={userPhoto}
+          src={userAvatar}
           alt="Admin"
           className="w-8 h-8 rounded-full object-cover ring-2 ring-white/20"
         />
         {isHovered && (
           <span className="ml-2 font-bold text-white text-xs whitespace-nowrap">
-            {displayName}
+            Admin PPL
           </span>
         )}
       </div>
@@ -100,7 +100,7 @@ const profileName =
             <button
               key={item.id}
               onClick={() => navigate(item.route)}
-              className={`flex items-center h-14 transition-all duration-300 ${
+              className={`relative flex items-center h-14 transition-all duration-300 ${
                 isHovered ? "px-3 rounded-full mx-1" : "justify-center"
               } ${
                 isActive
@@ -108,12 +108,15 @@ const profileName =
                   : "hover:bg-white/10"
               }`}
             >
-              <div className="flex items-center justify-center w-8">
+              <div className="relative flex items-center justify-center w-8">
                 <Icon
                   size={20}
                   className={isActive ? "text-[#63714e]" : "text-white"}
                   strokeWidth={2.5}
                 />
+                {item.id === "pesanAdmin" && unreadChat && (
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#63714e]"></span>
+                )}
               </div>
 
               {isHovered && (

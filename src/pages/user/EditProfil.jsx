@@ -1,12 +1,23 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import SideBar from "../../components/SideBar";
 import SaveConfirmModal from "../../components/SaveConfirmModal";
 import SaveSuccessModal from "../../components/SaveSuccessModal";
-import { Bell, ArrowLeft, Save, User, Mail, Phone, MapPin, Loader2 } from "lucide-react";
+import { Bell, ArrowLeft, Save, User, Mail, Phone, MapPin, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 
 import bgUtama from "../../assets/image.png";
 import userProfil from "../../assets/people.png";
+
+// ✅ Normalisasi response API — handle snake_case MAUPUN camelCase
+const normalizeApiResponse = (data) => ({
+  namaLengkap: data.namaLengkap || data.nama_lengkap || "",
+  email:       data.email || "",
+  no_telp:     data.no_telp || data.noTelp || "",
+  namaToko:    data.namaToko || data.nama_toko || "",
+  alamat:      data.alamat || "",
+  bio:         data.bio || "",
+  foto:        data.foto || null,
+});
 
 export const EditProfil = () => {
   const navigate = useNavigate();
@@ -16,10 +27,10 @@ export const EditProfil = () => {
   const [previewFoto, setPreviewFoto] = useState(userProfil);
   const [userId, setUserId] = useState(null);
 
-  // ✅ FIX 1: Tambah loading & error state
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [fetchError, setFetchError] = useState(null);
+  const [saveError, setSaveError] = useState(null);
 
   const [formData, setFormData] = useState({
     namaLengkap: "",
@@ -30,59 +41,46 @@ export const EditProfil = () => {
     bio: "",
   });
 
-  useEffect(() => {
-    // ✅ FIX 2: Gunakan async function di dalam useEffect dengan benar
-    const fetchProfil = async () => {
-      try {
-        const user = JSON.parse(localStorage.getItem("user"));
+  const [savedData, setSavedData] = useState(null);
 
-        if (!user) {
-          navigate("/login");
-          return;
-        }
+  const fetchProfil = useCallback(async (uid) => {
+    try {
+      const res = await fetch(`http://localhost:3000/api/profile/${uid}`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
 
-        setUserId(user.id);
+      console.log("RAW API response:", data); // debug — hapus setelah beres
 
-        // ✅ FIX 3: await fetch dengan benar
-        const res = await fetch(`http://localhost:3000/api/profile/${user.id}`);
+      // ✅ FIX UTAMA: normalisasi snake_case → camelCase sebelum set state
+      const normalized = normalizeApiResponse(data);
 
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
+      setFormData(normalized);
+      setSavedData(normalized);
 
-        const data = await res.json();
-
-        // ✅ FIX 4: Set formData dari response API dengan benar
-        setFormData({
-          namaLengkap: data.namaLengkap || "",
-          email: data.email || "",
-          no_telp: data.no_telp || "",
-          namaToko: data.namaToko || "",
-          alamat: data.alamat || "",
-          bio: data.bio || "",
-        });
-
-        // ✅ FIX 5: Preview foto dari server
-        if (data.foto) {
-          setPreviewFoto(`http://localhost:3000/uploads/${data.foto}`);
-        }
-      } catch (err) {
-        console.error("Gagal fetch profil:", err);
-        setFetchError("Gagal memuat data profil. Coba refresh halaman.");
-      } finally {
-        // ✅ FIX 6: Matikan loading setelah fetch selesai (berhasil atau gagal)
-        setIsLoading(false);
+      if (data.foto) {
+        setPreviewFoto(`http://localhost:3000/uploads/${data.foto}`);
       }
-    };
+    } catch (err) {
+      console.error("Gagal fetch profil:", err);
+      setFetchError("Gagal memuat data profil. Coba refresh halaman.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-    fetchProfil();
-  }, [navigate]);
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    setUserId(user.id);
+    fetchProfil(user.id);
+  }, [navigate, fetchProfil]);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setSaveError(null);
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleFoto = (e) => {
@@ -95,10 +93,21 @@ export const EditProfil = () => {
 
   const simpanProfil = async () => {
     setIsSaving(true);
+    setSaveError(null);
+
     const kirimData = new FormData();
-    Object.keys(formData).forEach((key) => {
-      kirimData.append(key, formData[key]);
-    });
+
+    // ✅ Kirim KEDUA format — biar backend snake_case maupun camelCase bisa terima
+    kirimData.append("namaLengkap", formData.namaLengkap);
+    kirimData.append("nama_lengkap", formData.namaLengkap);
+    kirimData.append("email", formData.email);
+    kirimData.append("no_telp", formData.no_telp);
+    kirimData.append("noTelp", formData.no_telp);
+    kirimData.append("namaToko", formData.namaToko);
+    kirimData.append("nama_toko", formData.namaToko);
+    kirimData.append("alamat", formData.alamat);
+    kirimData.append("bio", formData.bio);
+
     if (selectedFoto) kirimData.append("foto", selectedFoto);
 
     try {
@@ -108,59 +117,77 @@ export const EditProfil = () => {
       );
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.message || `HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log("Save response:", data); // debug — hapus setelah beres
 
-      // ✅ FIX 7: Update localStorage dengan data terbaru
+      // ✅ Update localStorage dengan kedua format sekaligus
       const oldUser = JSON.parse(localStorage.getItem("user")) || {};
       const updatedUser = {
         ...oldUser,
-        namaLengkap: formData.namaLengkap,
-        namaToko: formData.namaToko,
-        foto: data.foto || oldUser.foto,
+        namaLengkap:  formData.namaLengkap,
+        nama_lengkap: formData.namaLengkap,
+        namaToko:     formData.namaToko,
+        nama_toko:    formData.namaToko,
+        no_telp:      formData.no_telp,
+        noTelp:       formData.no_telp,
+        foto: data.foto || data.data?.foto || oldUser.foto,
       };
       localStorage.setItem("user", JSON.stringify(updatedUser));
 
-      // ✅ FIX 8: Update previewFoto jika server kembalikan foto baru
-      if (data.foto) {
-        setPreviewFoto(`http://localhost:3000/uploads/${data.foto}`);
+      // Beritahu komponen lain (ProfilUser, header) supaya ikut update
+      window.dispatchEvent(new Event("userProfileUpdated"));
+
+      if (data.foto || data.data?.foto) {
+        setPreviewFoto(`http://localhost:3000/uploads/${data.foto || data.data?.foto}`);
       }
 
+      setSavedData({ ...formData });
+      setSelectedFoto(null);
       setShowSuccess(true);
     } catch (error) {
       console.error("Gagal update profil:", error);
-      alert("Gagal update profil. Silakan coba lagi.");
+      setSaveError(error.message || "Gagal menyimpan profil. Silakan coba lagi.");
     } finally {
+      // ✅ WAJIB: selalu reset isSaving agar tombol tidak stuck loading
       setIsSaving(false);
     }
   };
 
-  // ✅ FIX 9: Tampilkan loading spinner saat data belum siap
-  const LoadingScreen = () => (
-    <div className="flex-1 flex items-center justify-center">
-      <div className="flex flex-col items-center gap-4">
-        <Loader2 size={40} className="text-[#63714e] animate-spin" />
-        <p className="text-[#63714e] font-semibold text-sm">Memuat data profil...</p>
-      </div>
-    </div>
-  );
+  const hasUnsavedChanges =
+    savedData &&
+    Object.keys(formData).some((key) => formData[key] !== savedData[key]);
 
-  // ✅ FIX 10: Tampilkan error jika fetch gagal
-  const ErrorScreen = () => (
-    <div className="flex-1 flex items-center justify-center">
-      <div className="flex flex-col items-center gap-4 text-center">
-        <p className="text-red-500 font-semibold">{fetchError}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-5 py-2 rounded-full bg-[#63714e] text-white text-sm"
-        >
-          Refresh
-        </button>
-      </div>
-    </div>
-  );
+  if (isLoading) {
+    return (
+      <main className="relative w-screen h-screen bg-[#effae8] overflow-hidden font-sans flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 size={40} className="text-[#63714e] animate-spin" />
+          <p className="text-[#63714e] font-semibold text-sm">Memuat data profil...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <main className="relative w-screen h-screen bg-[#effae8] overflow-hidden font-sans flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <AlertCircle size={36} className="text-red-400" />
+          <p className="text-red-500 font-semibold">{fetchError}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-5 py-2 rounded-full bg-[#63714e] text-white text-sm"
+          >
+            Refresh
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="relative w-screen h-screen bg-[#effae8] overflow-hidden font-sans">
@@ -196,13 +223,17 @@ export const EditProfil = () => {
         <section className="flex-1 flex gap-6 overflow-hidden">
           {/* Left Panel */}
           <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-            {/* Title + Buttons */}
             <div className="flex justify-between items-center">
               <div>
                 <h2 className="text-2xl font-black text-[#63714e]">Edit Profil</h2>
                 <p className="text-xs text-[#63714e]/70">Kelola informasi akun Anda</p>
               </div>
-              <div className="flex gap-3">
+              <div className="flex items-center gap-3">
+                {hasUnsavedChanges && (
+                  <span className="text-xs text-amber-600 bg-amber-100 px-3 py-1 rounded-full font-medium">
+                    Ada perubahan belum disimpan
+                  </span>
+                )}
                 <button
                   onClick={() => navigate("/profil")}
                   className="px-5 py-2 rounded-full border border-[#63714e] text-[#63714e] text-sm flex items-center gap-2 hover:bg-[#63714e]/10 transition"
@@ -212,143 +243,89 @@ export const EditProfil = () => {
                 </button>
                 <button
                   onClick={() => setShowConfirm(true)}
-                  disabled={isLoading || isSaving}
+                  disabled={isSaving}
                   className="px-5 py-2 rounded-full bg-[#f8bc22] text-white font-bold text-sm flex items-center gap-2 disabled:opacity-60 hover:bg-[#e0a81e] transition"
                 >
-                  {isSaving ? (
-                    <Loader2 size={15} className="animate-spin" />
-                  ) : (
-                    <Save size={15} />
-                  )}
+                  {isSaving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
                   {isSaving ? "Menyimpan..." : "Simpan"}
                 </button>
               </div>
             </div>
 
-            {/* Form Panel */}
+            {saveError && (
+              <div className="flex items-center gap-2 bg-red-100 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-2xl">
+                <AlertCircle size={16} />
+                {saveError}
+              </div>
+            )}
+
             <div className="flex-1 bg-white/60 backdrop-blur-2xl rounded-[35px] shadow-2xl p-7 flex flex-col overflow-y-auto">
-              {isLoading ? (
-                <LoadingScreen />
-              ) : fetchError ? (
-                <ErrorScreen />
-              ) : (
-                <>
-                  <h3 className="text-base font-bold text-[#63714e] mb-5">Informasi Akun</h3>
+              <h3 className="text-base font-bold text-[#63714e] mb-5">Informasi Akun</h3>
 
-                  {/* Foto */}
-                  <div className="flex items-center gap-5 mb-6">
-                    <img
-                      src={previewFoto}
-                      alt=""
-                      className="w-20 h-20 rounded-2xl object-cover shadow-md"
-                    />
-                    <div>
-                      <p className="text-sm font-bold text-[#63714e]">Foto Profil</p>
-                      <input type="file" accept="image/*" onChange={handleFoto} className="text-xs mt-2" />
-                    </div>
-                  </div>
+              <div className="flex items-center gap-5 mb-6">
+                <img src={previewFoto} alt="" className="w-20 h-20 rounded-2xl object-cover shadow-md" />
+                <div>
+                  <p className="text-sm font-bold text-[#63714e]">Foto Profil</p>
+                  <input type="file" accept="image/*" onChange={handleFoto} className="text-xs mt-2" />
+                </div>
+              </div>
 
-                  {/* Input Fields */}
-                  <div className="flex flex-col gap-4">
-                    <InputField
-                      icon={<User size={16} />}
-                      label="Nama Lengkap"
-                      name="namaLengkap"
-                      value={formData.namaLengkap}
-                      onChange={handleChange}
-                    />
-                    <InputField
-                      icon={<Mail size={16} />}
-                      label="Email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                    />
-                    <InputField
-                      icon={<Phone size={16} />}
-                      label="No Telepon"
-                      name="no_telp"
-                      type="tel"
-                      value={formData.no_telp}
-                      onChange={handleChange}
-                    />
-                    <InputField
-                      icon={<MapPin size={16} />}
-                      label="Alamat"
-                      name="alamat"
-                      value={formData.alamat}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </>
-              )}
+              <div className="flex flex-col gap-4">
+                <InputField icon={<User size={16} />}  label="Nama Lengkap" name="namaLengkap" value={formData.namaLengkap} onChange={handleChange} />
+                <InputField icon={<Mail size={16} />}   label="Email"        name="email"       value={formData.email}       onChange={handleChange} type="email" />
+                <InputField icon={<Phone size={16} />}  label="No Telepon"   name="no_telp"     value={formData.no_telp}     onChange={handleChange} type="tel" />
+                <InputField icon={<MapPin size={16} />} label="Alamat"       name="alamat"      value={formData.alamat}      onChange={handleChange} />
+              </div>
             </div>
           </div>
 
-          {/* Right Panel — Preview Kartu */}
+          {/* Right Panel — Preview */}
           <div className="w-72 bg-white/60 backdrop-blur-2xl rounded-[35px] shadow-2xl p-7 flex flex-col items-center">
-            {isLoading ? (
-              <div className="flex-1 flex items-center justify-center">
-                <Loader2 size={28} className="text-[#63714e] animate-spin" />
+            <img src={previewFoto} alt="" className="w-24 h-24 rounded-full object-cover mb-4 shadow-md" />
+            <h2 className="text-xl font-black text-[#63714e] text-center">{formData.namaLengkap || "—"}</h2>
+            <p className="text-xs text-[#63714e]/70 mt-1 text-center">{formData.email || "—"}</p>
+            <p className="text-xs text-[#63714e]/70 mt-1 text-center">{formData.no_telp || "—"}</p>
+            {formData.alamat && (
+              <p className="text-xs text-[#63714e]/60 mt-2 text-center leading-relaxed">{formData.alamat}</p>
+            )}
+            {savedData && !hasUnsavedChanges && (
+              <div className="mt-4 flex items-center gap-1.5 text-xs text-green-600 bg-green-50 px-3 py-1.5 rounded-full">
+                <CheckCircle2 size={13} />
+                Tersimpan
               </div>
-            ) : (
-              <>
-                <img
-                  src={previewFoto}
-                  alt=""
-                  className="w-24 h-24 rounded-full object-cover mb-4 shadow-md"
-                />
-                <h2 className="text-xl font-black text-[#63714e] text-center">
-                  {formData.namaLengkap || "—"}
-                </h2>
-                <p className="text-xs text-[#63714e]/70 mt-1 text-center">
-                  {formData.email || "—"}
-                </p>
-                <p className="text-xs text-[#63714e]/70 mt-1 text-center">
-                  {formData.no_telp || "—"}
-                </p>
-                {formData.alamat && (
-                  <p className="text-xs text-[#63714e]/60 mt-2 text-center leading-relaxed">
-                    {formData.alamat}
-                  </p>
-                )}
-              </>
             )}
           </div>
         </section>
       </div>
 
-      {/* Modals */}
       {showConfirm && (
         <SaveConfirmModal
           onClose={() => setShowConfirm(false)}
-          onConfirm={() => {
-            setShowConfirm(false);
-            simpanProfil();
-          }}
+          onConfirm={() => { setShowConfirm(false); simpanProfil(); }}
         />
       )}
 
-      {showSuccess && <SaveSuccessModal onDone={() => navigate("/profil")} />}
+      {showSuccess && (
+        <SaveSuccessModal
+          onDone={() => { setShowSuccess(false); navigate("/profil"); }}
+        />
+      )}
     </main>
   );
 };
 
-const InputField = ({ icon, label, name, value, onChange, type = "text" }) => {
-  return (
-    <div className="flex flex-col gap-1">
-      <label className="text-xs font-semibold text-[#63714e]/70 px-1">{label}</label>
-      <div className="bg-[#7d8767] rounded-2xl px-4 py-3 flex items-center gap-3 focus-within:ring-2 focus-within:ring-[#f8bc22] transition">
-        <div className="text-white shrink-0">{icon}</div>
-        <input
-          type={type}
-          name={name}
-          value={value}
-          onChange={onChange}
-          className="w-full bg-transparent outline-none text-white text-sm placeholder:text-white/40"
-        />
-      </div>
+const InputField = ({ icon, label, name, value, onChange, type = "text" }) => (
+  <div className="flex flex-col gap-1">
+    <label className="text-xs font-semibold text-[#63714e]/70 px-1">{label}</label>
+    <div className="bg-[#7d8767] rounded-2xl px-4 py-3 flex items-center gap-3 focus-within:ring-2 focus-within:ring-[#f8bc22] transition">
+      <div className="text-white shrink-0">{icon}</div>
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        className="w-full bg-transparent outline-none text-white text-sm placeholder:text-white/40"
+      />
     </div>
-  );
-};
+  </div>
+);
