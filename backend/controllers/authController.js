@@ -4,7 +4,6 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const register = (req, res) => {
-  // HAPUS alamatToko dari sini
   const { role, namaLengkap, email, password, noTelp, namaToko } = req.body;
 
   console.log('📝 Register request:', { role, namaLengkap, email, noTelp, namaToko });
@@ -19,40 +18,35 @@ const register = (req, res) => {
   }
 
   bcrypt.hash(password, 10, (err, hashedPassword) => {
-    if (err) {
-      console.error('Hash error:', err);
-      return res.status(500).json({ message: 'Gagal memproses password' });
-    }
+    if (err) return res.status(500).json({ message: 'Gagal memproses password' });
 
-    // PERBAIKI: Kirim 6 data (TANPA alamatToko)
-    User.createUser(
+   User.createUser(
       [role, namaLengkap, email, hashedPassword, noTelp || null, namaToko || null],
       (err, result) => {
         if (err) {
-          console.error('Database error:', err);
           if (err.code === 'ER_DUP_ENTRY') {
             return res.status(400).json({ message: 'Email sudah terdaftar' });
           }
-          return res.status(500).json({ message: 'Gagal register', error: err.message });
+          return res.status(500).json({ message: 'Gagal register' });
         }
 
         const token = jwt.sign(
-          { id: result.insertId, email: email, role: role },
+          { id: result.insertId, email, role },
           process.env.JWT_SECRET || 'your-secret-key',
           { expiresIn: '24h' }
         );
 
-        // PERBAIKI: Response TANPA alamatToko
         res.status(201).json({
           message: 'Register berhasil',
-          token: token,
+          token,
           user: {
             id: result.insertId,
-            namaLengkap: namaLengkap,
-            email: email,
-            role: role,
+            namaLengkap: namaLengkap,   // ← pakai variable langsung
+            email,
+            role,
             noTelp: noTelp || null,
-            namaToko: namaToko || null
+            namaToko: namaToko || null,
+            foto: null                   // ← user baru belum punya foto
           }
         });
       }
@@ -105,7 +99,6 @@ const login = (req, res) => {
         { expiresIn: '24h' }
       );
 
-      // PERBAIKI: Response login TANPA alamatToko
       res.json({
         message: 'Login berhasil',
         token: token,
@@ -115,7 +108,8 @@ const login = (req, res) => {
           email: user.email,
           role: user.role,
           noTelp: user.no_telp,
-          namaToko: user.nama_toko
+          namaToko: user.nama_toko,
+          foto: user.foto || null
         }
       });
     });

@@ -8,11 +8,12 @@ const app = express();
 // 1. MIDDLEWARE
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static('uploads'));
 
 // Menjadikan folder 'uploads' bisa diakses publik (untuk gambar produk)
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// 2. IMPORT ROUTES (Disatukan agar tidak bentrok)
+// 2. IMPORT ROUTES 
 const authRoutes = require("./routes/auth");
 const produkRoutes = require("./routes/produk");
 const chatRoutes = require("./routes/chat");

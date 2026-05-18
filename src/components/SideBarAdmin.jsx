@@ -6,11 +6,25 @@ import {
   MessageCircle,
   User,
 } from "lucide-react";
-import userAvatar from "../assets/Rectangle.png";
+import userAvatar from "../assets/people.png";
 
 const SideBarAdmin = ({ activePage }) => {
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
+  const currentUser = JSON.parse(
+  localStorage.getItem("user") ||
+    localStorage.getItem("userData") ||
+    "{}",
+);
+
+const profilePhoto = currentUser?.foto
+  ? `http://localhost:3000/uploads/${currentUser.foto}`
+  : userAvatar;
+
+const profileName =
+  currentUser?.nama_toko ||
+  currentUser?.nama_lengkap ||
+  "Admin";
 
   // Menu Items khusus Admin sesuai Route App.js
   const menuItems = [
@@ -35,6 +49,15 @@ const SideBarAdmin = ({ activePage }) => {
     { id: "profilAdmin", icon: User, label: "Profil", route: "/admin/profil" },
   ];
 
+  const userPhoto = currentUser?.foto
+    ? `http://localhost:3000/uploads/${currentUser.foto}`
+    : userAvatar;
+
+  const displayName =
+    currentUser?.namaToko ||
+    currentUser?.namaLengkap ||
+    "Admin";
+
   return (
     <nav
       onMouseEnter={() => setIsHovered(true)}
@@ -56,13 +79,13 @@ const SideBarAdmin = ({ activePage }) => {
         }`}
       >
         <img
-          src={userAvatar}
+          src={userPhoto}
           alt="Admin"
           className="w-8 h-8 rounded-full object-cover ring-2 ring-white/20"
         />
         {isHovered && (
           <span className="ml-2 font-bold text-white text-xs whitespace-nowrap">
-            Admin PPL
+            {displayName}
           </span>
         )}
       </div>

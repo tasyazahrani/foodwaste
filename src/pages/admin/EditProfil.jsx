@@ -118,12 +118,11 @@ export const EditProfilAdmin = () => {
   const [userId, setUserId] = useState(null);
 
   const [formData, setFormData] = useState({
-    nama_lengkap: "",
+    namaLengkap: "",
     email: "",
     no_telp: "",
-    nama_toko: "",
+    namaToko: "",
     alamat: "",
-    bio: "",
   });
 
   useEffect(() => {
@@ -140,10 +139,10 @@ export const EditProfilAdmin = () => {
       .then((res) => res.json())
       .then((data) => {
         setFormData({
-          nama_lengkap: data.nama_lengkap || "",
+          namaLengkap: data.namaLengkap || "",
           email: data.email || "",
           no_telp: data.no_telp || "",
-          nama_toko: data.nama_toko || "",
+          namaToko: data.namaToko || "",
           alamat: data.alamat || "",
           bio: data.bio || "",
         });
@@ -178,16 +177,35 @@ export const EditProfilAdmin = () => {
     }
 
     try {
-      await fetch(`http://localhost:3000/api/profile/${userId}`, {
-        method: "PUT",
-        body: kirimData,
-      });
+      const response = await fetch(
+        `http://localhost:3000/api/profile/${userId}`,
+        {
+          method: "PUT",
+          body: kirimData,
+        },
+      );
+
+      const data = await response.json();
+
+      const oldUser = JSON.parse(localStorage.getItem("user")) || {};
+
+      console.log(formData);
+
+      const updatedUser = {
+        ...oldUser,
+        namaLengkap: formData.namaLengkap,   
+        namaToko: formData.namaToko,         
+        foto: data.foto || oldUser.foto,
+      };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
 
       setShowSuccess(true);
-    } catch (err) {
-      console.log(err);
-      alert("Gagal update profil");
-    }
+
+      window.location.reload();
+      } catch (error) {
+        console.log(error);
+        alert("Gagal update profil");
+      }
   };
 
   return (
@@ -284,47 +302,38 @@ export const EditProfilAdmin = () => {
                   <InputField
                     icon={<User size={15} />}
                     label="Nama Admin"
-                    name="nama_lengkap"
-                    value={formData.nama_lengkap}
+                    name="namaLengkap"
+                    value={formData.namaLengkap || ""}
                     onChange={handleChange}
                   />
                   <InputField
                     icon={<Mail size={15} />}
                     label="Email"
                     name="email"
-                    value={formData.email}
+                    value={formData.email || ""}
                     onChange={handleChange}
                   />
                   <InputField
                     icon={<Phone size={15} />}
                     label="No Telepon"
                     name="no_telp"
-                    value={formData.no_telp}
+                    value={formData.no_telp || ""}
                     onChange={handleChange}
                   />
                   <InputField
                     icon={<Store size={15} />}
                     label="Nama Toko"
-                    name="nama_toko"
-                    value={formData.nama_toko}
+                    name="namaToko"
+                    value={formData.namaToko || ""}
                     onChange={handleChange}
                   />
                   <InputField
                     icon={<MapPin size={15} />}
                     label="Alamat"
                     name="alamat"
-                    value={formData.alamat}
+                    value={formData.alamat|| ""}
                     onChange={handleChange}
                   />
-                  <div className="col-span-2">
-                    <TextareaField
-                      icon={<FileText size={15} />}
-                      label="Deskripsi"
-                      name="bio"
-                      value={formData.bio}
-                      onChange={handleChange}
-                    />
-                  </div>
                 </div>
               </div>
             </div>
@@ -337,13 +346,13 @@ export const EditProfilAdmin = () => {
               className="w-20 h-20 rounded-full object-cover mx-auto mb-3"
             />
             <h4 className="text-base font-black text-[#63714e] text-center">
-              {formData.nama_lengkap}
+              {formData.namaLengkap}
             </h4>
             <p className="text-[10px] text-center text-[#63714e]/70">
               {formData.email}
             </p>
             <p className="text-[10px] text-center text-[#63714e]/70">
-              {formData.nama_toko}
+              {formData.namaToko}
             </p>
           </div>
         </section>

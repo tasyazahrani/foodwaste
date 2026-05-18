@@ -12,7 +12,7 @@ import {
 import SideBarAdmin from "../../components/SideBarAdmin";
 
 import bgUtama from "../../assets/image.png";
-import userProfil from "../../assets/Rectangle.png";
+import userProfil from "../../assets/people.png";
 
 // Import gambar menu — sama persis dengan ListMenuAdmin
 import donatGula from "../../assets/donat gula.jpg";
@@ -159,7 +159,7 @@ export function DashboardAdmin() {
     if (!query) return produk;
 
     return produk.filter((item) =>
-      [item.nama_produk, item.deskripsi, item.status, item.nama_toko]
+      [item.nama_produk, item.deskripsi, item.status, item.namaToko]
         .join(" ")
         .toLowerCase()
         .includes(query),

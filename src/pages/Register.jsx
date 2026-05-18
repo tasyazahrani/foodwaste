@@ -98,6 +98,7 @@ export const Register = () => {
           localStorage.setItem('token', data.token);
           localStorage.setItem('userRole', data.user.role);
           localStorage.setItem('userData', JSON.stringify(data.user));
+          localStorage.setItem('user', JSON.stringify(data.user));
         }
         
         // Redirect sesuai role

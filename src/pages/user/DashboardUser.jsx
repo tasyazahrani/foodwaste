@@ -14,7 +14,7 @@ import NotifDropdown from "../../components/NotifDropdown";
 import StoreDetailModal from "../../components/StoreDetailModal";
 
 import bgUtama from "../../assets/image.png";
-import userProfil from "../../assets/Rectangle.png"; // Foto default
+import userProfil from "../../assets/people.png"; // Foto default
 import kiri from "../../assets/kiri.png";
 import kanan from "../../assets/kanan.png";
 import food2 from "../../assets/chat2.png";
@@ -28,11 +28,14 @@ export const DashboardUser = () => {
   const [showStore, setShowStore] = useState(false);
   const [selectedStore, setSelectedStore] = useState(null);
   const [menus, setMenus] = useState([]);
+  
 
   // Ambil data user dari localStorage
-  const currentUser = JSON.parse(
-    localStorage.getItem("user") || localStorage.getItem("userData") || "{}",
-  );
+  const storedUser =
+    localStorage.getItem("user") ||
+    localStorage.getItem("userData");
+
+  const currentUser = storedUser ? JSON.parse(storedUser) : null;
 
   // Logika untuk menentukan sumber foto profil
   const userPhoto = currentUser?.foto
@@ -136,11 +139,23 @@ export const DashboardUser = () => {
         </div>
 
         {/* FOTO PROFIL DINAMIS */}
-        <img
-          src={userPhoto}
-          alt="Profile"
-          className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-lg"
-        />
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <p className="text-sm font-bold text-[#63714e]">
+              {currentUser?.namaLengkap ?? "User"}
+            </p>
+
+            <p className="text-xs text-[#63714e]/70 capitalize">
+              {currentUser?.role ?? "pengguna"}
+            </p>
+          </div>
+
+          <img
+            src={userPhoto}
+            alt="Profile"
+            className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-lg"
+          />
+        </div>
       </div>
 
       <div className="absolute top-24 left-12 right-12 bottom-4 flex gap-4 z-10 overflow-hidden">

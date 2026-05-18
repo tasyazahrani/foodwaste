@@ -34,8 +34,8 @@ router.get("/:id", (req, res) => {
   const { id } = req.params;
 
   db.query(
-    `SELECT id, role, nama_lengkap, email, no_telp, nama_toko, foto, alamat, bio 
-     FROM users WHERE id = ?`,
+    `SELECT id, role, nama_lengkap, email, no_telp, nama_toko, foto, alamat
+    FROM users WHERE id = ?`,
     [id],
     (err, result) => {
       if (err) {
@@ -58,13 +58,13 @@ router.get("/:id", (req, res) => {
 router.put("/:id", upload.single("foto"), (req, res) => {
   const { id } = req.params;
 
-  const { nama_lengkap, email, no_telp, nama_toko, alamat, bio } = req.body;
+  const { nama_lengkap, email, no_telp, nama_toko, alamat } = req.body;
 
   const foto = req.file ? req.file.filename : null;
 
   let sql = `
     UPDATE users
-    SET nama_lengkap = ?, email = ?, no_telp = ?, nama_toko = ?, alamat = ?, bio = ?
+    SET nama_lengkap = ?, email = ?, no_telp = ?, nama_toko = ?, alamat = ?
   `;
 
   const params = [
@@ -73,7 +73,6 @@ router.put("/:id", upload.single("foto"), (req, res) => {
     no_telp || null,
     nama_toko || null,
     alamat || null,
-    bio || null,
   ];
 
   if (foto) {
@@ -90,7 +89,10 @@ router.put("/:id", upload.single("foto"), (req, res) => {
       return res.status(500).json({ message: "Gagal update profil" });
     }
 
-    res.json({ message: "Profil berhasil diupdate" });
+    res.json({
+      message: "Profil berhasil diupdate",
+      foto: foto,
+    });
   });
 });
 

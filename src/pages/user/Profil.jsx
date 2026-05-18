@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 import bgUtama from "../../assets/image.png";
-import userProfil from "../../assets/Rectangle.png";
+import userProfil from "../../assets/people.png";
 import food1 from "../../assets/chat1.png";
 
 export const ProfilUser = () => {

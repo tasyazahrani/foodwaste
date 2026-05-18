@@ -1,11 +1,26 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Home, ShoppingBag, MessageCircle, User } from "lucide-react";
-import userAvatar from "../assets/Rectangle.png";
+
+import userAvatar from "../assets/people.png";
 
 const SideBar = ({ activePage }) => {
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
+
+  // AMBIL USER LOGIN
+  const currentUser = JSON.parse(
+    localStorage.getItem("user") || "{}",
+  );
+
+  // FOTO DINAMIS
+  const profilePhoto = currentUser?.foto
+    ? `http://localhost:3000/uploads/${currentUser.foto}`
+    : userAvatar;
+
+  // NAMA DINAMIS
+  const profileName =
+    currentUser?.nama_lengkap || "Pengguna";
 
   const menuItems = [
     { id: "home", icon: Home, label: "Dashboard", route: "/dashboarduser" },
@@ -13,6 +28,15 @@ const SideBar = ({ activePage }) => {
     { id: "pesan", icon: MessageCircle, label: "Pesan", route: "/pesan" },
     { id: "profil", icon: User, label: "Profil", route: "/profil" },
   ];
+
+  const userPhoto = currentUser?.foto
+    ? `http://localhost:3000/uploads/${currentUser.foto}`
+    : userAvatar;
+
+  const displayName =
+    currentUser?.namaLengkap ||
+    currentUser?.namaToko ||
+    "Pengguna";
 
   return (
     <nav
@@ -31,13 +55,14 @@ const SideBar = ({ activePage }) => {
         }`}
       >
         <img
-          src={userAvatar}
+          src={userPhoto}
           alt="User"
           className="w-8 h-8 rounded-full object-cover ring-2 ring-white/20"
         />
+
         {isHovered && (
           <span className="ml-2 font-bold text-white text-xs whitespace-nowrap">
-            Klp 09 PPL
+            {displayName}
           </span>
         )}
       </div>

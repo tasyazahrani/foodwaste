@@ -6,7 +6,7 @@ import SaveSuccessModal from "../../components/SaveSuccessModal";
 import { Bell, ArrowLeft, Save, User, Mail, Phone } from "lucide-react";
 
 import bgUtama from "../../assets/image.png";
-import userProfil from "../../assets/Rectangle.png";
+import userProfil from "../../assets/people.png";
 
 export const EditProfil = () => {
   const navigate = useNavigate();
@@ -17,12 +17,11 @@ export const EditProfil = () => {
   const [userId, setUserId] = useState(null);
 
   const [formData, setFormData] = useState({
-    nama_lengkap: "",
+    namaLengkap: "",
     email: "",
     no_telp: "",
-    nama_toko: "",
+    namaToko: "",
     alamat: "",
-    bio: "",
   });
 
   useEffect(() => {
@@ -39,10 +38,10 @@ export const EditProfil = () => {
       .then((res) => res.json())
       .then((data) => {
         setFormData({
-          nama_lengkap: data.nama_lengkap || "",
+          namaLengkap: data.namaLengkap || "",
           email: data.email || "",
           no_telp: data.no_telp || "",
-          nama_toko: data.nama_toko || "",
+          namaToko: data.namaToko || "",
           alamat: data.alamat || "",
           bio: data.bio || "",
         });
@@ -70,22 +69,31 @@ export const EditProfil = () => {
 
   const simpanProfil = async () => {
     const kirimData = new FormData();
-
     Object.keys(formData).forEach((key) => {
       kirimData.append(key, formData[key]);
     });
-
-    if (selectedFoto) {
-      kirimData.append("foto", selectedFoto);
-    }
+    if (selectedFoto) kirimData.append("foto", selectedFoto);
 
     try {
-      await fetch(`http://localhost:3000/api/profile/${userId}`, {
-        method: "PUT",
-        body: kirimData,
-      });
+      const response = await fetch(
+        `http://localhost:3000/api/profile/${userId}`,
+        { method: "PUT", body: kirimData }
+      );
+      const data = await response.json();
+
+      const oldUser = JSON.parse(localStorage.getItem("user")) || {};
+
+      const updatedUser = {
+        ...oldUser,
+        namaLengkap: formData.namaLengkap,   // ← DIPERBAIKI
+        namaToko: formData.namaToko,          // ← DIPERBAIKI
+        foto: data.foto || oldUser.foto,
+      };
+
+      localStorage.setItem("user", JSON.stringify(updatedUser));
 
       setShowSuccess(true);
+      // HAPUS window.location.reload() — biar modal muncul dulu
     } catch (error) {
       console.log(error);
       alert("Gagal update profil");
@@ -187,36 +195,29 @@ export const EditProfil = () => {
                 <InputField
                   icon={<User size={16} />}
                   label="Nama Lengkap"
-                  name="nama_lengkap"
-                  value={formData.nama_lengkap}
+                  name="namaLengkap"
+                  value={formData.namaLengkap || ""}
                   onChange={handleChange}
                 />
                 <InputField
                   icon={<Mail size={16} />}
                   label="Email"
                   name="email"
-                  value={formData.email}
+                  value={formData.email || ""}
                   onChange={handleChange}
                 />
                 <InputField
                   icon={<Phone size={16} />}
                   label="No Telepon"
                   name="no_telp"
-                  value={formData.no_telp}
+                  value={formData.no_telp || ""}
                   onChange={handleChange}
                 />
                 <InputField
                   icon={<User size={16} />}
                   label="Alamat"
                   name="alamat"
-                  value={formData.alamat}
-                  onChange={handleChange}
-                />
-                <InputField
-                  icon={<User size={16} />}
-                  label="Bio"
-                  name="bio"
-                  value={formData.bio}
+                  value={formData.alamat || ""}
                   onChange={handleChange}
                 />
               </div>
@@ -230,7 +231,7 @@ export const EditProfil = () => {
               className="w-24 h-24 rounded-full object-cover mb-4"
             />
             <h2 className="text-xl font-black text-[#63714e] text-center">
-              {formData.nama_lengkap}
+              {formData.namaLengkap}
             </h2>
             <p className="text-xs text-[#63714e]/70 mt-1 text-center">
               {formData.email}
