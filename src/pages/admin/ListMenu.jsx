@@ -110,7 +110,7 @@ function MenuCard({ item, onDelete, onEdit }) {
           src={
             item.image
               ? `${BASE_URL}/uploads/${item.image}`
-              : menuImages[item.name.toLowerCase()] || "https://via.placeholder.com/300x200?text=No+Image"
+              : "https://via.placeholder.com/300x200?text=No+Image"
           }
           alt=""
           className="w-full h-36 object-cover"
