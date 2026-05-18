@@ -11,8 +11,15 @@ const db = mysql.createConnection({
 db.connect((err) => {
   if (err) {
     console.error("❌ Koneksi gagal:", err.message);
-  } else {
-    console.log("✅ Connected ke Railway MySQL");
+    return;
+  }
+  console.log("✅ Connected ke Railway MySQL");
+});
+
+db.on("error", (err) => {
+  console.error("DB ERROR:", err);
+  if (err.code === "PROTOCOL_CONNECTION_LOST") {
+    db.connect();
   }
 });
 
