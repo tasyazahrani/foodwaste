@@ -34,9 +34,9 @@ app.get("/", (req, res) => {
 // ================= DATABASE CONNECT =================
 db.connect((err) => {
   if (err) {
-    console.error("❌ Gagal konek ke MySQL:", err);
+    console.error("❌ MySQL Error:", err.message);
   } else {
-    console.log("✅ Berhasil konek ke MySQL (Database: foodwaste)");
+    console.log("✅ MySQL Connected");
   }
 });
 
