@@ -12,6 +12,8 @@ import eyeImg from "../assets/eye.png";
 import emailImg from "../assets/email.png";
 import tokoImg from "../assets/toko.png";
 
+const BASE_URL = "https://foodwaste-production.up.railway.app";
+
 // Icon SVG inline
 const PhoneIcon = () => (
   <svg
@@ -78,7 +80,7 @@ export const Register = () => {
       
       console.log("Mengirim data:", requestBody); // Debug log
       
-      const response = await fetch('http://localhost:3000/api/register', {
+      const response = await fetch(`${BASE_URL}/api/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -112,7 +114,7 @@ export const Register = () => {
       }
     } catch (error) {
       console.error('Error:', error);
-      setErrorMessage('Tidak bisa konek ke server. Pastikan backend berjalan di http://localhost:3000');
+      setErrorMessage('Terjadi kesalahan saat registrasi');
     } finally {
       setIsLoading(false);
     }

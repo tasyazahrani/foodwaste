@@ -1,126 +1,327 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+} from "react";
+
 import axios from "axios";
+
 import {
-  Bell,
   Search,
   Send,
-  Plus,
-  MessageCircle,
+  Bell,
   ChevronDown,
+  MessageCircle,
 } from "lucide-react";
+
 import SideBarAdmin from "../../components/SideBarAdmin";
+
 import bgUtama from "../../assets/image.png";
 import userProfil from "../../assets/Rectangle.png";
 import chat1 from "../../assets/chat1.png";
 
+// ================= API =================
+const BASE_URL =
+  "https://foodwaste-production.up.railway.app";
+
+const API = `${BASE_URL}/api`;
+
 export const PesanAdmin = () => {
-  const [selectedId, setSelectedId] = useState(null);
-  const [searchValue, setSearchValue] = useState("");
-  const [inputText, setInputText] = useState("");
-  const [allConversations, setAllConversations] = useState([]);
+  // ================= STATE =================
+  const [selectedId, setSelectedId] =
+    useState(null);
+
+  const [searchValue, setSearchValue] =
+    useState("");
+
+  const [inputText, setInputText] =
+    useState("");
+
+  const [allConversations, setAllConversations] =
+    useState([]);
+
+  const [messages, setMessages] = useState(
+    [],
+  );
+
+  const [adminData, setAdminData] =
+    useState(null);
+
   const bottomRef = useRef(null);
 
-  const API = "http://localhost:3000/api";
-
+  // ================= USER =================
   const currentUser =
     JSON.parse(localStorage.getItem("user")) ||
-    JSON.parse(localStorage.getItem("userData")) ||
+    JSON.parse(
+      localStorage.getItem("userData"),
+    ) ||
     {};
 
-  const currentUserId = currentUser.id || null;
+  const currentUserId =
+    currentUser.id || null;
 
-  const fetchAdminRooms = async () => {
+  // ================= SCROLL =================
+  const scrollToBottom = () => {
+    bottomRef.current?.scrollIntoView({
+      behavior: "auto",
+    });
+  };
+
+  // ================= PROFILE =================
+  const fetchProfile = useCallback(async () => {
     if (!currentUserId) return;
 
     try {
-      const res = await axios.get(`${API}/chat?toko_id=${currentUserId}`);
+      const res = await axios.get(
+        `${API}/profile/${currentUserId}`,
+      );
 
-      const data = res.data.map((item) => ({
-        id: item.id,
-        user_id: item.user_id,
-        toko_id: item.toko_id,
-        name: item.nama_pengguna || "Pengguna",
-        msg: item.last_message || "Belum ada pesan",
-        time: item.last_time
-          ? new Date(item.last_time).toLocaleTimeString("id-ID", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })
-          : "",
-        img: item.user_foto
-          ? `http://localhost:3000/uploads/${item.user_foto}`
-          : chat1,
-        messages:
-          allConversations.find((x) => x.id === item.id)?.messages || [],
-      }));
+      setAdminData(res.data);
+    } catch (err) {
+      console.log(err);
+    }
+  }, [currentUserId]);
 
-      setAllConversations(data);
+  // ================= FETCH ROOMS =================
+  const fetchAdminRooms = useCallback(
+    async () => {
+      if (!currentUserId) return;
+
+      try {
+        const res = await axios.get(
+          `${API}/chat?toko_id=${currentUserId}`,
+        );
+
+        const formatted = Array.isArray(
+          res.data,
+        )
+          ? res.data.map((item) => ({
+              id: item.id,
+
+              user_id: item.user_id,
+
+              toko_id: item.toko_id,
+
+              name:
+                item.nama_pengguna ||
+                "Pengguna",
+
+              msg:
+                item.last_message ||
+                "Belum ada pesan",
+
+              time: item.last_time
+                ? new Date(
+                    item.last_time,
+                  ).toLocaleTimeString(
+                    "id-ID",
+                    {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    },
+                  )
+                : "",
+
+              img: item.user_foto
+                ? `${BASE_URL}/uploads/${item.user_foto}`
+                : chat1,
+            }))
+          : [];
+
+        setAllConversations((prev) => {
+          const oldData =
+            JSON.stringify(prev);
+
+          const newData =
+            JSON.stringify(formatted);
+
+          if (oldData !== newData) {
+            return formatted;
+          }
+
+          return prev;
+        });
+
+        // auto pilih chat pertama
+        if (
+          !selectedId &&
+          formatted.length > 0
+        ) {
+          setSelectedId(
+            formatted[0].id,
+          );
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    [currentUserId, selectedId],
+  );
+
+  // ================= FETCH MESSAGE =================
+  const fetchMessages = useCallback(
+    async () => {
+      if (
+        !selectedId ||
+        !currentUserId
+      )
+        return;
+
+      try {
+        const res = await axios.get(
+          `${API}/chat/${selectedId}`,
+        );
+
+        const formatted = Array.isArray(
+          res.data,
+        )
+          ? res.data.map((msg) => ({
+              id: msg.id,
+
+              text: msg.message,
+
+              from:
+                Number(
+                  msg.sender_id,
+                ) ===
+                Number(currentUserId)
+                  ? "me"
+                  : "them",
+
+              created_at:
+                msg.created_at,
+            }))
+          : [];
+
+        setMessages((prev) => {
+          const oldData =
+            JSON.stringify(prev);
+
+          const newData =
+            JSON.stringify(formatted);
+
+          if (oldData !== newData) {
+            return formatted;
+          }
+
+          return prev;
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    [selectedId, currentUserId],
+  );
+
+  // ================= SEND MESSAGE =================
+  const sendMessage = async () => {
+    if (!inputText.trim()) return;
+
+    if (!selectedId) return;
+
+    try {
+      const text = inputText;
+
+      setInputText("");
+
+      // optimistic UI
+      const optimisticMessage = {
+        id: Date.now(),
+
+        text,
+
+        from: "me",
+      };
+
+      setMessages((prev) => [
+        ...prev,
+        optimisticMessage,
+      ]);
+
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
+
+      await axios.post(`${API}/chat`, {
+        chat_id: selectedId,
+
+        sender_id: currentUserId,
+
+        message: text,
+      });
+
+      fetchMessages();
+
+      fetchAdminRooms();
     } catch (err) {
       console.error(err);
     }
   };
 
+  // ================= EFFECT =================
   useEffect(() => {
+    fetchProfile();
+
     fetchAdminRooms();
-    const interval = setInterval(fetchAdminRooms, 2000);
+  }, [fetchProfile, fetchAdminRooms]);
+
+  // polling room
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchAdminRooms();
+    }, 5000);
+
     return () => clearInterval(interval);
-  }, [currentUserId, allConversations]);
+  }, [fetchAdminRooms]);
 
-  const fetchMessages = async (chatId) => {
-    const res = await axios.get(`${API}/chat/${chatId}`);
-
-    const msgs = res.data.map((m) => ({
-      from: m.sender_id === currentUserId ? "me" : "them",
-      text: m.message,
-    }));
-
-    setAllConversations((prev) =>
-      prev.map((item) =>
-        item.id === chatId ? { ...item, messages: msgs } : item,
-      ),
-    );
-
-    setTimeout(() => {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
-  };
-
+  // polling message
   useEffect(() => {
     if (!selectedId) return;
 
-    fetchMessages(selectedId);
-    const interval = setInterval(() => fetchMessages(selectedId), 1500);
+    fetchMessages();
+
+    const interval = setInterval(() => {
+      fetchMessages();
+    }, 5000);
+
     return () => clearInterval(interval);
+  }, [selectedId, fetchMessages]);
+
+  // scroll saat buka room
+  useEffect(() => {
+    if (!selectedId) return;
+
+    setTimeout(() => {
+      scrollToBottom();
+    }, 100);
   }, [selectedId]);
 
-  const sendMessage = async () => {
-    if (!inputText.trim() || !selectedId) return;
+  // ================= FILTER =================
+  const filtered =
+    allConversations.filter((c) =>
+      c.name
+        .toLowerCase()
+        .includes(
+          searchValue.toLowerCase(),
+        ),
+    );
 
-    await axios.post(`${API}/chat`, {
-      chat_id: selectedId,
-      sender_id: currentUserId,
-      message: inputText,
-    });
-
-    setInputText("");
-    fetchMessages(selectedId);
-    fetchAdminRooms();
-  };
-
-  const filtered = allConversations.filter((c) =>
-    c.name.toLowerCase().includes(searchValue.toLowerCase()),
-  );
-
-  const activeChat = allConversations.find((c) => c.id === selectedId);
+  const activeChat =
+    allConversations.find(
+      (c) => c.id === selectedId,
+    );
 
   return (
-    <main className="relative w-screen h-screen bg-[#effae8] overflow-hidden font-sans">
+    <main className="relative w-screen h-screen overflow-hidden bg-[#effae8] font-sans">
+      {/* BACKGROUND */}
       <div className="fixed inset-0 z-0 flex pointer-events-none">
         <img
           src={bgUtama}
           alt=""
-          className="w-1/2 h-full object-cover opacity-70"
+          className="w-1/2 h-full object-cover opacity-75"
         />
+
         <img
           src={bgUtama}
           alt=""
@@ -128,27 +329,80 @@ export const PesanAdmin = () => {
         />
       </div>
 
+      {/* HEADER */}
       <header className="absolute top-6 left-12 z-30">
         <div className="px-7 py-3 bg-[#63714ed1] rounded-3xl shadow-xl">
           <h1 className="text-2xl font-black italic text-white">
-            Food <span className="text-[#eb9f29]">Waste</span>
+            Food{" "}
+            <span className="text-[#eb9f29]">
+              Waste
+            </span>
           </h1>
         </div>
       </header>
 
+      {/* TOP RIGHT */}
+      <div className="absolute top-6 right-12 flex items-center gap-4 z-30">
+        <button className="w-11 h-11 rounded-full bg-[#f8bc22] flex items-center justify-center shadow-lg">
+          <Bell
+            size={20}
+            className="text-[#63714e]"
+          />
+        </button>
+
+        <div className="bg-white rounded-full px-3 py-1 flex items-center gap-3 shadow-md">
+          <img
+            src={
+              adminData?.foto
+                ? `${BASE_URL}/uploads/${adminData.foto}`
+                : userProfil
+            }
+            alt=""
+            className="w-10 h-10 rounded-full object-cover"
+          />
+
+          <div className="leading-tight">
+            <p className="text-sm font-bold text-[#63714e]">
+              {adminData?.nama_toko ||
+                adminData?.nama_lengkap ||
+                "Admin"}
+            </p>
+
+            <p className="text-[10px] text-[#63714e]/60">
+              Admin
+            </p>
+          </div>
+
+          <ChevronDown size={14} />
+        </div>
+      </div>
+
+      {/* CONTENT */}
       <div className="absolute top-24 left-12 right-12 bottom-4 flex gap-4 z-10 overflow-hidden">
+        {/* SIDEBAR */}
         <SideBarAdmin activePage="pesanAdmin" />
 
-        <section className="w-80 bg-white/40 backdrop-blur-2xl rounded-3xl shadow-xl flex flex-col overflow-hidden">
-          <div className="p-4">
-            <h2 className="text-lg font-black text-[#63714e] mb-3">
+        {/* LEFT */}
+        <section className="w-80 bg-white/45 backdrop-blur-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+          <div className="p-5">
+            <h2 className="text-lg font-black text-[#63714e] mb-4">
               Pesan Masuk
             </h2>
-            <div className="flex items-center bg-white rounded-full px-4 py-3 gap-2">
-              <Search size={15} className="text-gray-400" />
+
+            <div className="bg-white rounded-full px-4 py-3 flex items-center gap-2 shadow">
+              <Search
+                size={16}
+                className="text-gray-400"
+              />
+
               <input
+                type="text"
                 value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
+                onChange={(e) =>
+                  setSearchValue(
+                    e.target.value,
+                  )
+                }
                 placeholder="Cari pembeli..."
                 className="flex-1 bg-transparent outline-none text-sm"
               />
@@ -156,64 +410,129 @@ export const PesanAdmin = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto px-3 pb-4 space-y-2">
-            {filtered.map((c) => (
+            {filtered.map((chat) => (
               <button
-                key={c.id}
-                onClick={() => setSelectedId(c.id)}
-                className="w-full flex items-center gap-3 p-3 rounded-3xl bg-white hover:bg-gray-50"
+                key={chat.id}
+                onClick={() =>
+                  setSelectedId(chat.id)
+                }
+                className={`w-full flex items-center gap-3 p-3 rounded-3xl transition-all ${
+                  selectedId === chat.id
+                    ? "bg-[#63714e] text-white"
+                    : "bg-white hover:bg-gray-50"
+                }`}
               >
-                <img src={c.img} alt="" className="w-12 h-12 rounded-full" />
-                <div className="flex-1 text-left">
-                  <h4 className="font-black text-sm text-[#63714e]">
-                    {c.name}
-                  </h4>
-                  <p className="text-xs text-gray-500 truncate">{c.msg}</p>
+                <img
+                  src={chat.img}
+                  alt=""
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+
+                <div className="flex-1 text-left overflow-hidden">
+                  <div className="flex justify-between items-center">
+                    <h4 className="font-black text-sm truncate">
+                      {chat.name}
+                    </h4>
+
+                    <span className="text-[10px] opacity-70">
+                      {chat.time}
+                    </span>
+                  </div>
+
+                  <p className="text-xs truncate opacity-70">
+                    {chat.msg}
+                  </p>
                 </div>
               </button>
             ))}
           </div>
         </section>
 
-        <section className="flex-1 bg-white/80 rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+        {/* RIGHT CHAT */}
+        <section className="flex-1 bg-white/75 backdrop-blur-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col">
           {activeChat ? (
             <>
-              <div className="px-8 py-5 border-b font-black text-[#63714e]">
-                {activeChat.name}
+              {/* HEADER CHAT */}
+              <div className="px-7 py-5 border-b bg-white/60 flex items-center gap-3">
+                <img
+                  src={activeChat.img}
+                  alt=""
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+
+                <div>
+                  <h3 className="font-black text-[#63714e]">
+                    {activeChat.name}
+                  </h3>
+
+                  <p className="text-xs text-[#63714e]/60">
+                    Sedang aktif
+                  </p>
+                </div>
               </div>
-              <div className="flex-1 px-8 py-6 overflow-y-auto flex flex-col gap-4">
-                {activeChat.messages.map((msg, i) => (
+
+              {/* MESSAGE */}
+              <div className="flex-1 overflow-y-auto px-7 py-6 flex flex-col gap-4">
+                {messages.map((msg) => (
                   <div
-                    key={i}
-                    className={`flex ${msg.from === "me" ? "justify-end" : "justify-start"}`}
+                    key={msg.id}
+                    className={`flex ${
+                      msg.from === "me"
+                        ? "justify-end"
+                        : "justify-start"
+                    }`}
                   >
                     <div
-                      className={`px-5 py-3 rounded-3xl max-w-md text-sm ${msg.from === "me" ? "bg-[#63714e] text-white" : "bg-white shadow"}`}
+                      className={`max-w-md px-5 py-3 rounded-3xl text-sm ${
+                        msg.from === "me"
+                          ? "bg-[#63714e] text-white rounded-br-md"
+                          : "bg-white shadow rounded-bl-md"
+                      }`}
                     >
                       {msg.text}
                     </div>
                   </div>
                 ))}
+
                 <div ref={bottomRef}></div>
               </div>
-              <div className="p-5 border-t bg-white/50 flex gap-3">
-                <input
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                  placeholder="Tulis balasan..."
-                  className="flex-1 bg-white rounded-2xl px-5 py-3 outline-none"
-                />
-                <button
-                  onClick={sendMessage}
-                  className="bg-[#f8bc22] text-white px-5 rounded-2xl"
-                >
-                  <Send size={16} />
-                </button>
+
+              {/* INPUT */}
+              <div className="p-5 border-t bg-white/50">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="text"
+                    value={inputText}
+                    onChange={(e) =>
+                      setInputText(
+                        e.target.value,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      e.key === "Enter" &&
+                      sendMessage()
+                    }
+                    placeholder="Tulis balasan..."
+                    className="flex-1 bg-white rounded-2xl px-5 py-3 outline-none shadow-sm"
+                  />
+
+                  <button
+                    onClick={sendMessage}
+                    className="w-14 h-14 rounded-2xl bg-[#f8bc22] hover:bg-[#e4aa16] flex items-center justify-center text-white shadow-lg"
+                  >
+                    <Send size={18} />
+                  </button>
+                </div>
               </div>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-gray-400">
-              Pilih percakapan
+            <div className="flex-1 flex flex-col items-center justify-center text-[#63714e]/50">
+              <MessageCircle size={50} />
+
+              <p className="mt-3 text-sm">
+                Pilih percakapan terlebih
+                dahulu
+              </p>
             </div>
           )}
         </section>

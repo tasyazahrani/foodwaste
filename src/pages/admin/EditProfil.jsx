@@ -19,6 +19,8 @@ import {
 import bgUtama from "../../assets/image.png";
 import userProfil from "../../assets/Rectangle.png";
 
+const BASE_URL = "https://foodwaste-production.up.railway.app";
+
 // ─── Modal Backdrop ───────────────────────────────────────────────────────────
 function Backdrop({ children }) {
   return (
@@ -149,11 +151,11 @@ export const EditProfilAdmin = () => {
     });
 
     if (user.foto) {
-      setAvatar(`http://localhost:3000/uploads/${user.foto}`);
+      setAvatar(`${BASE_URL}/uploads/${user.foto}`);
     }
 
     // Fetch API untuk data terbaru dari DB
-    fetch(`http://localhost:3000/api/profile/${user.id}`)
+    fetch(`${BASE_URL}/api/profile/${user.id}`)
       .then((res) => {
         if (!res.ok) throw new Error("Gagal fetch profil");
         return res.json();
@@ -168,7 +170,7 @@ export const EditProfilAdmin = () => {
         });
 
         if (data.foto) {
-          setAvatar(`http://localhost:3000/uploads/${data.foto}`);
+          setAvatar(`${BASE_URL}/uploads/${data.foto}`);
         }
       })
       .catch((err) => {
@@ -205,7 +207,7 @@ export const EditProfilAdmin = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:3000/api/profile/${userId}`,
+        `${BASE_URL}/api/profile/${userId}`,
         {
           method: "PUT",
           body: kirimData,

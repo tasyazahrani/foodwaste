@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import userAvatar from "../assets/people.png";
 
+const BASE_URL = "https://foodwaste-production.up.railway.app";
+
 const SideBarAdmin = ({ activePage }) => {
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
@@ -18,7 +20,7 @@ const SideBarAdmin = ({ activePage }) => {
 );
 
 const profilePhoto = currentUser?.foto
-  ? `http://localhost:3000/uploads/${currentUser.foto}`
+  ? `${BASE_URL}/uploads/${currentUser.foto}`
   : userAvatar;
 
 const profileName =
@@ -50,7 +52,7 @@ const profileName =
   ];
 
   const userPhoto = currentUser?.foto
-    ? `http://localhost:3000/uploads/${currentUser.foto}`
+    ? `${BASE_URL}/uploads/${currentUser.foto}`
     : userAvatar;
 
   const displayName =

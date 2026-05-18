@@ -2,6 +2,8 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { X, Store, Clock, Tag } from "lucide-react";
 
+const BASE_URL = "https://foodwaste-production.up.railway.app";
+
 const MenuDetailModal = ({ menu, onClose }) => {
   const navigate = useNavigate();
 
@@ -42,7 +44,7 @@ const MenuDetailModal = ({ menu, onClose }) => {
 
         <div className="relative h-44">
           <img
-            src={`http://localhost:3000/uploads/${menu.image}`}
+            src={`${BASE_URL}/uploads/${menu.image}`}
             alt=""
             className="w-full h-full object-cover"
           />

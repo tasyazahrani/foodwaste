@@ -3,6 +3,8 @@ import { BellRing, MessageSquare, AlertTriangle } from "lucide-react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
+const BASE_URL = "https://foodwaste-production.up.railway.app";
+
 const NotifDropdown = () => {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
@@ -29,7 +31,7 @@ const NotifDropdown = () => {
 
     const fetchNotif = async () => {
       try {
-        const res = await axios.get(`http://localhost:3000/api/notifikasi/${userId}`);
+        const res = await axios.get(`${BASE_URL}/api/notifikasi/${userId}`);
         setNotifications(res.data);
         const unread = res.data.filter(n => n.is_read === 0 || n.is_read === false).length;
         setUnreadCount(unread);
@@ -46,7 +48,7 @@ const NotifDropdown = () => {
   const markAsRead = async () => {
     if (!userId || unreadCount === 0) return;
     try {
-      await axios.put(`http://localhost:3000/api/notifikasi/read/${userId}`);
+      await axios.put(`${BASE_URL}/api/notifikasi/read/${userId}`);
       setUnreadCount(0);
       setNotifications(prev => prev.map(n => ({ ...n, is_read: 1 })));
     } catch (error) { }

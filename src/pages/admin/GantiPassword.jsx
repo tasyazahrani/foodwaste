@@ -16,6 +16,9 @@ import {
 import bgUtama from "../../assets/image.png";
 import userProfil from "../../assets/Rectangle.png";
 
+const BASE_URL = "https://foodwaste-production.up.railway.app"; 
+const API = "https://foodwaste-production.up.railway.app/api";
+
 function Backdrop({ children }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -125,7 +128,7 @@ export const GantiPasswordAdmin = () => {
 
     try {
       const res = await fetch(
-        `http://localhost:3000/api/profile/password/${user.id}`,
+        `${API}/profile/${user.id}/change-password`,
         {
           method: "PUT",
           headers: {

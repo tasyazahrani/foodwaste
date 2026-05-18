@@ -18,6 +18,8 @@ import {
 import bgUtama from "../../assets/image.png";
 import userProfil from "../../assets/Rectangle.png";
 
+const BASE_URL = "https://foodwaste-production.up.railway.app";
+
 const PengaturanAdmin = () => {
   const navigate = useNavigate();
   const currentUser = JSON.parse(localStorage.getItem("user"));
@@ -76,7 +78,7 @@ const PengaturanAdmin = () => {
         <img
           src={
             currentUser?.foto
-              ? `http://localhost:3000/uploads/${currentUser.foto}`
+              ? `${BASE_URL}/uploads/${currentUser.foto}`
               : userProfil
           }
           alt=""

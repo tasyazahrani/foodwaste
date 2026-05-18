@@ -16,6 +16,8 @@ import bgUtama from "../../assets/image.png";
 import userProfil from "../../assets/people.png";
 import food1 from "../../assets/image.png";
 
+const BASE_URL = "https://foodwaste-production.up.railway.app";
+
 const adminLogs = [
   {
     id: 1,
@@ -88,7 +90,7 @@ export const ProfilAdmin = () => {
       return;
     }
 
-    fetch(`http://localhost:3000/api/profile/${user.id}`)
+    fetch(`${BASE_URL}/api/profile/${user.id}`)
       .then((res) => res.json())
       .then((data) => setAdminData(data))
       .catch((err) => console.log(err));
@@ -125,7 +127,7 @@ export const ProfilAdmin = () => {
           <img
             src={
               adminData?.foto
-                ? `http://localhost:3000/uploads/${adminData.foto}`
+                ? `${BASE_URL}/uploads/${adminData.foto}`
                 : userProfil
             }
             alt=""
@@ -147,7 +149,7 @@ export const ProfilAdmin = () => {
               <img
                 src={
                   adminData?.foto
-                    ? `http://localhost:3000/uploads/${adminData.foto}`
+                    ? `${BASE_URL}/uploads/${adminData.foto}`
                     : userProfil
                 }
                 alt=""

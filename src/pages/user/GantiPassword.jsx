@@ -17,6 +17,8 @@ import {
 import bgUtama from "../../assets/image.png";
 import userProfil from "../../assets/Rectangle.png";
 
+const BASE_URL = "https://foodwaste-production.up.railway.app";
+
 export const GantiPassword = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
@@ -41,7 +43,7 @@ export const GantiPassword = () => {
 
     try {
       const res = await fetch(
-        `http://localhost:3000/api/profile/password/${user.id}`,
+        `${BASE_URL}/api/ganti-password/${user.id}`,
         {
           method: "PUT",
           headers: {

@@ -16,6 +16,8 @@ import bgUtama from "../../assets/image.png";
 import userProfil from "../../assets/people.png";
 import food1 from "../../assets/chat1.png";
 
+const BASE_URL = "https://foodwaste-production.up.railway.app";
+
 export const ProfilUser = () => {
   const [showLogout, setShowLogout] = useState(false);
   const [userData, setUserData] = useState(null);
@@ -38,7 +40,7 @@ export const ProfilUser = () => {
       return;
     }
 
-    fetch(`http://localhost:3000/api/profile/${user.id}`)
+    fetch(`${BASE_URL}/api/profile/${user.id}`)
       .then((res) => res.json())
       .then((data) => setUserData(data))
       .catch((err) => console.log(err));
@@ -75,7 +77,7 @@ export const ProfilUser = () => {
           <img
             src={
               userData?.foto
-                ? `http://localhost:3000/uploads/${userData.foto}`
+                ? `${BASE_URL}/uploads/${userData.foto}`
                 : userProfil
             }
             alt=""
@@ -95,7 +97,7 @@ export const ProfilUser = () => {
               <img
                 src={
                   userData?.foto
-                    ? `http://localhost:3000/uploads/${userData.foto}`
+                    ? `${BASE_URL}/uploads/${userData.foto}`
                     : userProfil
                 }
                 alt=""

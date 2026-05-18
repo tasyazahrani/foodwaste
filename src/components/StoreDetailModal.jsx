@@ -3,6 +3,8 @@ import { MapPin, Clock3, Star, Store, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import food2 from "../assets/chat2.png";
 
+const BASE_URL = "https://foodwaste-production.up.railway.app";
+
 const StoreDetailModal = ({ store, onClose }) => {
   const navigate = useNavigate();
 
@@ -37,7 +39,7 @@ const StoreDetailModal = ({ store, onClose }) => {
           <img
             src={
               store.image
-                ? `http://localhost:3000/uploads/${store.image}`
+                ? `${BASE_URL}/uploads/${store.image}`
                 : food2
             }
             alt="store"

@@ -4,6 +4,8 @@ import { Home, ShoppingBag, MessageCircle, User } from "lucide-react";
 
 import userAvatar from "../assets/people.png";
 
+const BASE_URL = "https://foodwaste-production.up.railway.app";
+
 const SideBar = ({ activePage }) => {
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
@@ -15,7 +17,7 @@ const SideBar = ({ activePage }) => {
 
   // FOTO DINAMIS
   const profilePhoto = currentUser?.foto
-    ? `http://localhost:3000/uploads/${currentUser.foto}`
+    ? `${BASE_URL}/uploads/${currentUser.foto}`
     : userAvatar;
 
   // NAMA DINAMIS
@@ -30,7 +32,7 @@ const SideBar = ({ activePage }) => {
   ];
 
   const userPhoto = currentUser?.foto
-    ? `http://localhost:3000/uploads/${currentUser.foto}`
+    ? `${BASE_URL}/uploads/${currentUser.foto}`
     : userAvatar;
 
   const displayName =

@@ -8,6 +8,8 @@ import NotifDropdown from "../../components/NotifDropdown";
 import bgUtama from "../../assets/image.png";
 import userProfil from "../../assets/Rectangle.png";
 
+const BASE_URL = "https://foodwaste-production.up.railway.app";
+
 const ListMenu = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -24,7 +26,7 @@ const ListMenu = () => {
   useEffect(() => {
     const fetchProduk = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/produk");
+        const response = await fetch(`${BASE_URL}/api/produk`);
         const data = await response.json();
         setMenus(data);
       } catch (error) {
@@ -164,9 +166,13 @@ const ListMenu = () => {
                     onClick={() => setSelectedMenu(item)}
                   >
                     <img
-                      src={`http://localhost:3000/uploads/${item.image}`}
+                      src={
+                        item.image
+                          ? `https://foodwaste-production.up.railway.app/uploads/${item.image}`
+                          : "https://via.placeholder.com/300x200?text=No+Image"
+                      }
                       alt={item.nama_produk}
-                      className="w-full h-32 object-cover group-hover:scale-110 transition-transform duration-500"
+                      className="w-full h-28 object-cover rounded-2xl"
                     />
                     <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-bold text-white bg-[#63714e] shadow-sm">
                       {getStatus(item.expired_date)}

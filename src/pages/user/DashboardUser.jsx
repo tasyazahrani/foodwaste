@@ -20,11 +20,14 @@ import kanan from "../../assets/kanan.png";
 import food2 from "../../assets/chat2.png";
 import NotificationBell from "../../components/NotificationBell";
 
+const BASE_URL = "https://foodwaste-production.up.railway.app";
+const API_URL = "https://foodwaste-production.up.railway.app/api";
+
 export const DashboardUser = () => {
   const navigate = useNavigate();
   
   const [search, setSearch] = useState("");
-    const [showStore, setShowStore] = useState(false);
+  const [showStore, setShowStore] = useState(false);
   const [selectedStore, setSelectedStore] = useState(null);
   const [menus, setMenus] = useState([]);
 
@@ -41,7 +44,7 @@ export const DashboardUser = () => {
 
   // Logika untuk menentukan sumber foto profil
   const userPhoto = currentUser?.foto
-    ? `http://localhost:3000/uploads/${currentUser.foto}`
+    ? `${BASE_URL}/uploads/${currentUser.foto}`
     : userProfil;
 
   const handlePesanKlik = (item) => {
@@ -63,7 +66,7 @@ export const DashboardUser = () => {
   useEffect(() => {
     const fetchProduk = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/produk");
+        const response = await fetch(`${API_URL}/produk`);
         const data = await response.json();
         if (Array.isArray(data)) {
           setMenus(data);
@@ -185,7 +188,11 @@ export const DashboardUser = () => {
                     className="bg-white rounded-3xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all p-2.5"
                   >
                     <img
-                      src={`http://localhost:3000/uploads/${item.image}`}
+                      src={
+                        item.image
+                          ? `https://foodwaste-production.up.railway.app/uploads/${item.image}`
+                          : "https://via.placeholder.com/300x200?text=No+Image"
+                      }
                       alt={item.nama_produk}
                       className="w-full h-28 object-cover rounded-2xl"
                     />

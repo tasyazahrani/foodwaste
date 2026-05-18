@@ -21,7 +21,8 @@ import brownies from "../../assets/brownies.jpg";
 import cake from "../../assets/cake.jpg";
 import cheescake from "../../assets/cheescake.jpg";
 
-const API = "http://localhost:3000/api";
+const API_URL = "https://foodwaste-production.up.railway.app/api";
+const BASE_URL = "https://foodwaste-production.up.railway.app";
 
 const statusStyles = {
   Expired: "bg-red-500 text-white",
@@ -108,8 +109,8 @@ function MenuCard({ item, onDelete, onEdit }) {
         <img
           src={
             item.image
-              ? `http://localhost:3000/uploads/${item.image}`
-              : menuImages[item.name.toLowerCase()] || bgUtama
+              ? `${BASE_URL}/uploads/${item.image}`
+              : menuImages[item.name.toLowerCase()] || "https://via.placeholder.com/300x200?text=No+Image"
           }
           alt=""
           className="w-full h-36 object-cover"
@@ -183,7 +184,7 @@ const ListMenuAdmin = () => {
   const loadAdminProducts = async () => {
     if (!currentUserId) return;
     try {
-      const data = await fetch(`${API}/produk/toko/${currentUserId}`).then(
+      const data = await fetch(`${BASE_URL}/api/produk/toko/${currentUserId}`).then(
         (res) => res.json(),
       );
       const mapped = data.map((item) => ({
@@ -209,7 +210,7 @@ const ListMenuAdmin = () => {
     const fetchProfile = async () => {
       if (!currentUserId) return;
       try {
-        const res = await fetch(`${API}/profile/${currentUserId}`);
+        const res = await fetch(`${API_URL}/profile/${currentUserId}`);
         const data = await res.json();
         setAdminData(data);
       } catch (err) {
@@ -265,7 +266,7 @@ const ListMenuAdmin = () => {
       image: null,
     });
     setEditImagePreview(
-      item.image ? `http://localhost:3000/uploads/${item.image}` : bgUtama,
+      item.image ? `${BASE_URL}/uploads/${item.image}` : bgUtama,
     );
   };
 
@@ -281,13 +282,13 @@ const ListMenuAdmin = () => {
     formData.append("id_toko", currentUserId);
     if (form.image) formData.append("image", form.image);
 
-    await fetch(`${API}/produk`, { method: "POST", body: formData });
+    await fetch(`${API_URL}/produk`, { method: "POST", body: formData });
     await loadAdminProducts();
     closeAdd();
   };
 
   const handleDeleteMenu = async (id) => {
-    await fetch(`${API}/produk/${id}`, { method: "DELETE" });
+    await fetch(`${API_URL}/produk/${id}`, { method: "DELETE" });
     await loadAdminProducts();
     setDeleteTarget(null);
   };
@@ -303,7 +304,7 @@ const ListMenuAdmin = () => {
     formData.append("production_date", editForm.productionDate);
     if (editForm.image) formData.append("image", editForm.image);
 
-    await fetch(`${API}/produk/${editTarget.id_produk}`, {
+    await fetch(`${API_URL}/produk/${editTarget.id_produk}`, {
       method: "PUT",
       body: formData,
     });
@@ -353,7 +354,7 @@ const ListMenuAdmin = () => {
           <img
             src={
               adminData?.foto
-                ? `http://localhost:3000/uploads/${adminData.foto}`
+                ? `${BASE_URL}/uploads/${adminData.foto}`
                 : userProfil
             }
             alt="Profil"

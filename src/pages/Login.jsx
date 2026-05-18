@@ -9,6 +9,8 @@ import bawaImg from "../assets/bawah.png";
 import lockImg from "../assets/lock.png";
 import eyeImg from "../assets/eye.png";
 
+const BASE_URL = "https://foodwaste-production.up.railway.app";
+
 export const Login = () => {
   const navigate = useNavigate();
   const emailInputId = useId();
@@ -51,7 +53,7 @@ export const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3000/api/login", {
+      const response = await fetch(`${BASE_URL}/api/login`,{
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -89,7 +91,7 @@ export const Login = () => {
     } catch (error) {
       console.error("Error:", error);
       setErrorMessage(
-        "Tidak dapat terhubung ke server. Pastikan backend berjalan di http://localhost:3000",
+        "Tidak dapat terhubung ke server Railway. Pastikan server sedang berjalan dan coba lagi.",
       );
     } finally {
       setIsLoading(false);

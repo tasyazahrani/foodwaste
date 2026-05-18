@@ -8,6 +8,8 @@ import { Bell, ArrowLeft, Save, User, Mail, Phone, MapPin, Loader2, CheckCircle2
 import bgUtama from "../../assets/image.png";
 import userProfil from "../../assets/people.png";
 
+const BASE_URL = "https://foodwaste-production.up.railway.app";
+
 // ✅ Normalisasi response API — handle snake_case MAUPUN camelCase
 const normalizeApiResponse = (data) => ({
   namaLengkap: data.namaLengkap || data.nama_lengkap || "",
@@ -45,9 +47,9 @@ export const EditProfil = () => {
 
   const fetchProfil = useCallback(async (uid) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/profile/${uid}`);
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      const data = await res.json();
+      const response = await fetch(`${BASE_URL}/api/profile/${uid}`);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
 
       console.log("RAW API response:", data); // debug — hapus setelah beres
 
@@ -58,7 +60,7 @@ export const EditProfil = () => {
       setSavedData(normalized);
 
       if (data.foto) {
-        setPreviewFoto(`http://localhost:3000/uploads/${data.foto}`);
+        setPreviewFoto(`${BASE_URL}/uploads/${data.foto}`);
       }
     } catch (err) {
       console.error("Gagal fetch profil:", err);
@@ -112,7 +114,7 @@ export const EditProfil = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:3000/api/profile/${userId}`,
+        `${BASE_URL}/api/profile/${userId}`,
         { method: "PUT", body: kirimData }
       );
 
@@ -142,7 +144,7 @@ export const EditProfil = () => {
       window.dispatchEvent(new Event("userProfileUpdated"));
 
       if (data.foto || data.data?.foto) {
-        setPreviewFoto(`http://localhost:3000/uploads/${data.foto || data.data?.foto}`);
+        setPreviewFoto(`${BASE_URL}/uploads/${data.foto || data.data?.foto}`);
       }
 
       setSavedData({ ...formData });
