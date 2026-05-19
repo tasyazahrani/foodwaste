@@ -45,9 +45,10 @@ const emptyForm = {
 
 const getStatus = (expiredDate) => {
   if (!expiredDate) return "Available";
-  const today = new Date();
-  const exp = new Date(expiredDate);
-  const diff = Math.ceil((exp - today) / (1000 * 60 * 60 * 24));
+
+  const diff =
+    Math.ceil((new Date(expiredDate) - new Date()) / (1000 * 60 * 60 * 24));
+
   if (diff < 0) return "Expired";
   if (diff <= 2) return "Almost Expired";
   return "Available";
@@ -192,15 +193,12 @@ const ListMenuAdmin = () => {
       const mapped = data.map((item) => ({
         id_produk: item.id_produk,
         name: item.nama_produk,
-        price: "Rp. " + item.harga,
-        salePrice: item.harga_diskon ? "Rp. " + item.harga_diskon : null,
+        price: item.harga,
+        salePrice: item.harga_diskon,
         description: item.deskripsi,
-        productionDate: item.created_at || "",
-        expiredDate: item.expired_date || "",
-        store: item.nama_toko || "Toko Saya",
+        expiredDate: item.expired_date,
+        store: item.nama_toko,
         image: item.image,
-        status: getStatus(item.expired_date),
-        expiry: getExpiryText(item.expired_date),
       }));
       setMenuCards(mapped);
     } catch (err) {
@@ -273,25 +271,26 @@ const ListMenuAdmin = () => {
   };
 
   const handleAddMenu = async (e) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append("nama_produk", form.name);
-    formData.append("harga", parseInt(form.price) || 0);
-    formData.append("harga_diskon", parseInt(form.discountPrice) || null);
-    formData.append("deskripsi", form.description);
-    formData.append("expired_date", form.expiredDate);
-    formData.append("production_date", form.productionDate);
-    formData.append("id_toko", currentUserId);
-    if (form.image) formData.append("image", form.image);
+  e.preventDefault();
 
-    for (let pair of formData.entries()) {
-      console.log(pair[0], pair[1]);
-    }
+  const formData = new FormData();
+  formData.append("nama_produk", form.name);
+  formData.append("harga", form.price);
+  formData.append("harga_diskon", form.discountPrice || "");
+  formData.append("deskripsi", form.description);
+  formData.append("expired_date", form.expiredDate);
+  formData.append("id_toko", currentUserId);
 
-    await fetch(`${API_URL}/produk`, { method: "POST", body: formData });
-    await loadAdminProducts();
-    closeAdd();
-  };
+  if (form.image) formData.append("image", form.image);
+
+  await fetch(`${API_URL}/produk`, {
+    method: "POST",
+    body: formData,
+  });
+
+  await loadAdminProducts();
+  setIsAddOpen(false);
+};
 
   const handleDeleteMenu = async (id) => {
     await fetch(`${API_URL}/produk/${id}`, { method: "DELETE" });
