@@ -3,8 +3,20 @@ const router = express.Router();
 const db = require("../db");
 const path = require("path");
 const multer = require("multer");
+const fs = require("fs");
 
-// ================= MULTER CONFIG =================
+/* =========================
+   PASTIKAN FOLDER UPLOAD ADA
+========================= */
+const uploadDir = path.join(__dirname, "../uploads");
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+/* =========================
+   MULTER CONFIG FIX
+========================= */
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, path.join(__dirname, "../uploads"));
@@ -17,7 +29,9 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// ================= GET ALL PRODUK =================
+/* =========================
+   GET ALL PRODUK
+========================= */
 router.get("/", (req, res) => {
   const sql = `
     SELECT produk.*, users.nama_toko
@@ -32,7 +46,9 @@ router.get("/", (req, res) => {
   });
 });
 
-// ================= GET BY TOKO =================
+/* =========================
+   GET BY TOKO
+========================= */
 router.get("/toko/:id_toko", (req, res) => {
   const sql = `
     SELECT produk.*, users.nama_toko
@@ -48,11 +64,14 @@ router.get("/toko/:id_toko", (req, res) => {
   });
 });
 
-// ================= ADD PRODUK =================
+/* =========================
+   ADD PRODUK (UPLOAD FIX)
+========================= */
 router.post("/", upload.single("image"), (req, res) => {
+  console.log("=== UPLOAD DEBUG ===");
   console.log("FILE:", req.file);
   console.log("BODY:", req.body);
-
+  
   const {
     nama_produk,
     harga,
@@ -97,7 +116,9 @@ router.post("/", upload.single("image"), (req, res) => {
   );
 });
 
-// ================= DELETE =================
+/* =========================
+   DELETE PRODUK
+========================= */
 router.delete("/:id", (req, res) => {
   db.query(
     "DELETE FROM produk WHERE id_produk = ?",
@@ -109,7 +130,9 @@ router.delete("/:id", (req, res) => {
   );
 });
 
-// ================= UPDATE =================
+/* =========================
+   UPDATE PRODUK (IMAGE SAFE FIX)
+========================= */
 router.put("/:id", upload.single("image"), (req, res) => {
   const {
     nama_produk,
@@ -124,37 +147,44 @@ router.put("/:id", upload.single("image"), (req, res) => {
 
   let sql = `
     UPDATE produk
-    SET nama_produk=?, harga=?, deskripsi=?, created_at=?, expired_date=?, harga_diskon=?
+    SET nama_produk=?,
+        harga=?,
+        deskripsi=?,
+        created_at=?,
+        expired_date=?,
+        harga_diskon=?
   `;
 
   const params = [
     nama_produk,
     harga,
-    deskripsi,
-    production_date,
-    expired_date,
-    harga_diskon,
+    deskripsi || null,
+    production_date || null,
+    expired_date || null,
+    harga_diskon || null,
   ];
 
   if (image) {
-    sql += ", image=?";
+    sql += `, image=?`;
     params.push(image);
   }
 
-  sql += " WHERE id_produk=?";
+  sql += ` WHERE id_produk=?`;
   params.push(req.params.id);
 
   db.query(sql, params, (err) => {
     if (err) {
       console.error(err);
-      return res.status(500).json({ message: "Gagal update" });
+      return res.status(500).json({ message: "Gagal update produk" });
     }
 
-    res.json({ message: "Produk diupdate" });
+    res.json({ message: "Produk berhasil diupdate" });
   });
 });
 
-// ================= DETAIL =================
+/* =========================
+   DETAIL PRODUK
+========================= */
 router.get("/:id", (req, res) => {
   db.query(
     "SELECT * FROM produk WHERE id_produk=?",

@@ -284,6 +284,10 @@ const ListMenuAdmin = () => {
     formData.append("id_toko", currentUserId);
     if (form.image) formData.append("image", form.image);
 
+    for (let pair of formData.entries()) {
+      console.log(pair[0], pair[1]);
+    }
+
     await fetch(`${API_URL}/produk`, { method: "POST", body: formData });
     await loadAdminProducts();
     closeAdd();
