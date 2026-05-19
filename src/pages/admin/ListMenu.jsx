@@ -108,12 +108,14 @@ function MenuCard({ item, onDelete, onEdit }) {
       <div className="relative">
         <img
           src={
-            item.image
-              ? `${BASE_URL}/uploads/${item.image}`
-              : "https://via.placeholder.com/300x200?text=No+Image"
-          }
-          alt=""
-          className="w-full h-36 object-cover"
+          item.image
+            ? `${BASE_URL}/uploads/${item.image}`
+            : item.foto
+            ? `${BASE_URL}/uploads/${item.foto}`
+            : item.foto_produk
+            ? `${BASE_URL}/uploads/${item.foto_produk}`
+            : "https://via.placeholder.com/300x200?text=No+Image"
+        }
         />
         <span
           className={`absolute top-2 right-2 text-[10px] font-black px-2 py-1 rounded-full ${statusStyles[item.status]}`}

@@ -4,6 +4,7 @@ const db = require("../db");
 const path = require("path");
 const multer = require("multer");
 
+// ================= MULTER CONFIG =================
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, path.join(__dirname, "../uploads"));
@@ -16,9 +17,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-/* =========================
-   GET ALL PRODUK
-========================= */
+// ================= GET ALL PRODUK =================
 router.get("/", (req, res) => {
   const sql = `
     SELECT produk.*, users.nama_toko
@@ -28,20 +27,13 @@ router.get("/", (req, res) => {
   `;
 
   db.query(sql, (err, result) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ message: "Gagal ambil produk" });
-    }
+    if (err) return res.status(500).json(err);
     res.json(result);
   });
 });
 
-/* =========================
-   GET PRODUK PER TOKO
-========================= */
+// ================= GET BY TOKO =================
 router.get("/toko/:id_toko", (req, res) => {
-  const { id_toko } = req.params;
-
   const sql = `
     SELECT produk.*, users.nama_toko
     FROM produk
@@ -50,19 +42,17 @@ router.get("/toko/:id_toko", (req, res) => {
     ORDER BY produk.id_produk DESC
   `;
 
-  db.query(sql, [id_toko], (err, result) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ message: "Gagal ambil produk toko" });
-    }
+  db.query(sql, [req.params.id_toko], (err, result) => {
+    if (err) return res.status(500).json(err);
     res.json(result);
   });
 });
 
-/* =========================
-   ADD PRODUK
-========================= */
+// ================= ADD PRODUK =================
 router.post("/", upload.single("image"), (req, res) => {
+  console.log("FILE:", req.file);
+  console.log("BODY:", req.body);
+
   const {
     nama_produk,
     harga,
@@ -99,33 +89,28 @@ router.post("/", upload.single("image"), (req, res) => {
         return res.status(500).json({ message: "Gagal tambah produk" });
       }
 
-      res.json({ message: "Produk berhasil ditambahkan" });
-    },
+      res.json({
+        message: "Produk berhasil ditambahkan",
+        image,
+      });
+    }
   );
 });
 
-/* =========================
-   DELETE PRODUK
-========================= */
+// ================= DELETE =================
 router.delete("/:id", (req, res) => {
-  const { id } = req.params;
-
-  db.query("DELETE FROM produk WHERE id_produk = ?", [id], (err) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ message: "Gagal hapus produk" });
+  db.query(
+    "DELETE FROM produk WHERE id_produk = ?",
+    [req.params.id],
+    (err) => {
+      if (err) return res.status(500).json(err);
+      res.json({ message: "Produk dihapus" });
     }
-
-    res.json({ message: "Produk berhasil dihapus" });
-  });
+  );
 });
 
-/* =========================
-   UPDATE PRODUK
-========================= */
+// ================= UPDATE =================
 router.put("/:id", upload.single("image"), (req, res) => {
-  const { id } = req.params;
-
   const {
     nama_produk,
     harga,
@@ -139,55 +124,48 @@ router.put("/:id", upload.single("image"), (req, res) => {
 
   let sql = `
     UPDATE produk
-    SET nama_produk = ?, harga = ?, deskripsi = ?, created_at = ?, expired_date = ?, harga_diskon = ?
+    SET nama_produk=?, harga=?, deskripsi=?, created_at=?, expired_date=?, harga_diskon=?
   `;
 
   const params = [
     nama_produk,
     harga,
-    deskripsi || null,
-    production_date || null,
-    expired_date || null,
-    harga_diskon || null,
+    deskripsi,
+    production_date,
+    expired_date,
+    harga_diskon,
   ];
 
   if (image) {
-    sql += ", image = ?";
+    sql += ", image=?";
     params.push(image);
   }
 
-  sql += " WHERE id_produk = ?";
-  params.push(id);
+  sql += " WHERE id_produk=?";
+  params.push(req.params.id);
 
   db.query(sql, params, (err) => {
     if (err) {
       console.error(err);
-      return res.status(500).json({ message: "Gagal update produk" });
+      return res.status(500).json({ message: "Gagal update" });
     }
 
-    res.json({ message: "Produk berhasil diupdate" });
+    res.json({ message: "Produk diupdate" });
   });
 });
 
-/* =========================
-   GET DETAIL PRODUK
-========================= */
+// ================= DETAIL =================
 router.get("/:id", (req, res) => {
   db.query(
-    "SELECT * FROM produk WHERE id_produk = ?",
+    "SELECT * FROM produk WHERE id_produk=?",
     [req.params.id],
     (err, result) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ message: "Gagal ambil detail produk" });
-      }
-
-      if (result.length === 0) {
-        return res.status(404).json({ message: "Produk tidak ditemukan" });
-      }
+      if (err) return res.status(500).json(err);
+      if (!result.length)
+        return res.status(404).json({ message: "Not found" });
 
       res.json(result[0]);
-    },
+    }
   );
 });
 
